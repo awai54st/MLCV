@@ -1,17 +1,17 @@
-function [node,nodeL,nodeR] = splitNode(data,node,param)
+function [node,nodeL,nodeR] = splitNode(data,node,param,split_func)
 % Split node
 
-visualise = 1;
-split_func = 2;
+visualise = 0;
 
 % Initilise child nodes
 iter = param.splitNum;
-nodeL = struct('idx',[],'t',nan,'dim',0,'prob',[]);
-nodeR = struct('idx',[],'t',nan,'dim',0,'prob',[]);
+nodeL = struct('idx',[],'t',nan,'dim',0,'prob',[],'split_func',split_func);
+nodeR = struct('idx',[],'t',nan,'dim',0,'prob',[],'split_func',split_func);
 
 if length(node.idx) <= 5 % make this node a leaf if has less than 5 data points
     node.t = nan;
     node.dim = 0;
+    node.split_func = split_func;
     return;
 end
 
@@ -82,7 +82,7 @@ end
 end
 
 function [idx_,dim,t] = weak_learner(data,N,D,split_func)
-if split_func==1
+if split_func==1 % Axis-aligned
 %     dim = randi(D-1); % Pick one random dimension
 %     d_min = single(min(data(:,dim))) + eps; % Find the data range of this dimension
 %     d_max = single(max(data(:,dim))) - eps;
@@ -96,17 +96,28 @@ if split_func==1
     t(dim) = 1;
     t(D) = d_min + rand*((d_max-d_min));
     idx_ = ([data(:,1:D-1),ones(N,1)]*t') > 0;
-elseif split_func==2
+elseif split_func==2 % Linear
     dim = 1;
     t = 0.01*randn(1,D);
     idx_ = ([data(:,1:D-1),ones(N,1)]*t') > 0;
-elseif split_func==3
+elseif split_func==3 % Non-linear
     dim = 1;
     t = zeros(1,D+3);
-    t(1,1:D+3) = 0.01*randn(1,D+2);
+    t(1,1:D+3) = 0.01*randn(1,D+3);
     data_hd = [data(:,1:D-1),ones(N,1),data(:,1).^2,data(:,2).^2,data(:,1).*data(:,2)];
     idx_ = (data_hd*t') > 0;
-elseif split_func==4
-    
+elseif split_func==4 % Two-pixel
+    dim = randi(D-1); % Pick one random dimension
+    if dim==1
+        diff = data(:,1)-data(:,2);
+    elseif dim==2
+        diff = data(:,2)-data(:,1);
+    end
+    d_min = single(min(diff(:,1))) + eps; % Find the data range of this dimension
+    d_max = single(max(diff(:,1))) - eps;
+    t = zeros(1,2);
+    t(1) = 1;
+    t(2) = d_min + rand*((d_max-d_min));
+    idx_ = ([diff(:,1),ones(N,1)]*t') > 0;
 end
 end

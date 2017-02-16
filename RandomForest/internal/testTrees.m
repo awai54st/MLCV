@@ -12,11 +12,19 @@ for T = 1:length(tree)
             dim = tree(T).node(idx).dim;
             % Decision
 %             if data(m,dim) < t % Pass data to left node
-            if size(t,2)==D
+            split_func = tree(T).node(idx).split_func;
+            if tree(T).node(idx).split_func==1 || tree(T).node(idx).split_func==2
                 decision = [data(m,1:D-1),1]*t' > 0;
-            else
+            elseif tree(T).node(idx).split_func==3
                 data_hd = [data(m,1:D-1),1,data(m,1).^2,data(m,2).^2,data(m,1).*data(m,2)];
                 decision = (data_hd(m,:)*t') > 0;
+            elseif tree(T).node(idx).split_func==4
+                if dim==1
+                    diff = data(m,1)-data(m,2);
+                elseif dim==2
+                    diff = data(m,2)-data(m,1);
+                end
+                decision = ([diff,1]*t') > 0;
             end
             if decision % Pass data to left node
                 idx = idx*2;

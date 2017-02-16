@@ -9,6 +9,8 @@ function tree = growtrees(data,param)
 
 disp('Training Random Forest...');
 
+split_func = 4;
+
 [N,D] = size(data);
 frac = 1 - 1/exp(1); % Bootstrap sampling fraction: 1 - 1/e (63.2%)
 
@@ -21,11 +23,11 @@ for T = 1:param.num
     prior = histc(data(idx,end),labels)/length(idx);
     
     % Initialise base node
-    tree(T).node(1) = struct('idx',idx,'t',nan,'dim',-1,'prob',[]);
+    tree(T).node(1) = struct('idx',idx,'t',nan,'dim',-1,'prob',[],'split_func',split_func);
     
     % Split Nodes
     for n = 1:2^(param.depth-1)-1
-        [tree(T).node(n),tree(T).node(n*2),tree(T).node(n*2+1)] = splitNode(data,tree(T).node(n),param);
+        [tree(T).node(n),tree(T).node(n*2),tree(T).node(n*2+1)] = splitNode(data,tree(T).node(n),param,split_func);
     end
     
     % Leaf Nodes
