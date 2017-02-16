@@ -1,17 +1,16 @@
-function [node,nodeL,nodeR] = splitNode(data,node,param,split_func)
+function [node,nodeL,nodeR] = splitNode(data,node,param)
 % Split node
 
 visualise = 0;
 
 % Initilise child nodes
 iter = param.splitNum;
-nodeL = struct('idx',[],'t',nan,'dim',0,'prob',[],'split_func',split_func);
-nodeR = struct('idx',[],'t',nan,'dim',0,'prob',[],'split_func',split_func);
+nodeL = struct('idx',[],'t',nan,'dim',0,'prob',[]);
+nodeR = struct('idx',[],'t',nan,'dim',0,'prob',[]);
 
 if length(node.idx) <= 5 % make this node a leaf if has less than 5 data points
     node.t = nan;
     node.dim = 0;
-    node.split_func = split_func;
     return;
 end
 
@@ -30,12 +29,12 @@ for n = 1:iter
 %     t = d_min + rand*((d_max-d_min)); % Pick a random value within the range as threshold
 %     idx_ = data(:,dim) < t;
 
-    [idx_,dim,t] = weak_learner(data,N,D, split_func);
+    [idx_,dim,t] = weak_learner(data,N,D, param.split_func);
     
     ig = getIG(data,idx_); % Calculate information gain
     
     if visualise
-        visualise_splitfunc(idx_,data,dim,t,ig,n,split_func);
+        visualise_splitfunc(idx_,data,dim,t,ig,n,param.split_func);
         pause();
     end
     
@@ -47,7 +46,7 @@ nodeL.idx = idx(idx_best);
 nodeR.idx = idx(~idx_best);
 
 if visualise
-    visualise_splitfunc(idx_best,data,dim,t,ig_best,0,split_func)
+    visualise_splitfunc(idx_best,data,dim,t,ig_best,0,param.split_func)
     fprintf('Information gain = %f. \n',ig_best);
     pause();
 end

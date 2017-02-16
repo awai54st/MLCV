@@ -36,6 +36,7 @@ param.num = 10;         % Number of trees
 param.depth = 5;        % trees depth
 param.splitNum = 3;     % Number of split functions to try
 param.split = 'IG';     % Currently support 'information gain' only
+param.split_func = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%
 % Train Random Forest
@@ -50,7 +51,7 @@ trees = growTrees(data_train,param);
 % grab the few data points and evaluate them one by one by the leant RF
 test_point = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
 for n=1:4
-    leaves = testTrees([test_point(n,:) 0],trees);
+    leaves = testTrees([test_point(n,:) 0],trees,param);
     disp(leaves);
     % average the class distributions of leaf nodes of all trees
     p_rf = trees(1).prob(leaves,:);

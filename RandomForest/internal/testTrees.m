@@ -1,4 +1,4 @@
-function label = testTrees(data,tree)
+function label = testTrees(data,tree,param)
 % Slow version - pass data point one-by-one
 
 cc = [];
@@ -12,13 +12,13 @@ for T = 1:length(tree)
             dim = tree(T).node(idx).dim;
             % Decision
 %             if data(m,dim) < t % Pass data to left node
-            split_func = tree(T).node(idx).split_func;
-            if tree(T).node(idx).split_func==1 || tree(T).node(idx).split_func==2
+            split_func = param.split_func;
+            if split_func==1 || split_func==2
                 decision = [data(m,1:D-1),1]*t' > 0;
-            elseif tree(T).node(idx).split_func==3
+            elseif split_func==3
                 data_hd = [data(m,1:D-1),1,data(m,1).^2,data(m,2).^2,data(m,1).*data(m,2)];
                 decision = (data_hd(m,:)*t') > 0;
-            elseif tree(T).node(idx).split_func==4
+            elseif split_func==4
                 if dim==1
                     diff = data(m,1)-data(m,2);
                 elseif dim==2
