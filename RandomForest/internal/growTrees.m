@@ -1,4 +1,4 @@
-function tree = growtrees(data,param)
+function [tree,ig_best_output] = growtrees(data,param)
 
 %        Base               Each node stores:
 %         1                   trees.idx       - data (index only) which split into this node
@@ -14,6 +14,9 @@ frac = 1 - 1/exp(1); % Bootstrap sampling fraction: 1 - 1/e (63.2%)
 
 cnt_total = 1;
 [labels,~] = unique(data(:,end));
+
+ig_best_array = zeros(1,param.num);
+
 for T = 1:param.num
     
     % Bootstraping aggregating
@@ -25,7 +28,10 @@ for T = 1:param.num
     
     % Split Nodes
     for n = 1:2^(param.depth-1)-1
-        [tree(T).node(n),tree(T).node(n*2),tree(T).node(n*2+1)] = splitNode(data,tree(T).node(n),param);
+        [ig_best, tree(T).node(n),tree(T).node(n*2),tree(T).node(n*2+1)] = splitNode(data,tree(T).node(n),param);
+        if n==1
+            ig_best_array(T) = ig_best;
+        end
     end
     
     % Leaf Nodes
@@ -55,4 +61,7 @@ for T = 1:param.num
         end
     end
 end
+
+ig_best_output = mean(ig_best_array);
+
 end

@@ -1,6 +1,6 @@
-function [node,nodeL,nodeR] = splitNode(data,node,param)
+function [ig_best,node,nodeL,nodeR] = splitNode(data,node,param)
 % Split node
-
+ig_best = -inf;
 visualise = 0;
 
 % Initilise child nodes
@@ -17,7 +17,7 @@ end
 idx = node.idx;
 data = data(idx,:);
 [N,D] = size(data);
-ig_best = -inf; % Initialise best information gain
+% ig_best = -inf; % Initialise best information gain
 idx_best = [];
 for n = 1:iter
     
@@ -54,8 +54,8 @@ end
 end
 
 function ig = getIG(data,idx) % Information Gain - the 'purity' of data labels in both child nodes after split. The higher the purer.
-L = data(idx);
-R = data(~idx);
+L = data(idx,:);
+R = data(~idx,:);
 H = getE(data);
 HL = getE(L);
 HR = getE(R);
@@ -63,11 +63,18 @@ ig = H - sum(idx)/length(idx)*HL - sum(~idx)/length(idx)*HR;
 end
 
 function H = getE(X) % Entropy
-cdist= histc(X(:,1:end), unique(X(:,end))) + 1;
+cdist= histc(X(:,3), unique(X(:,3))) + 1;
 cdist= cdist/sum(cdist);
 cdist= cdist .* log(cdist);
 H = -sum(cdist);
 end
+
+% function H = getE(X) % Entropy
+% cdist= histc(X(:,1:end), unique(X(:,end))) + 1;
+% cdist= cdist/sum(cdist);
+% cdist= cdist .* log(cdist);
+% H = -sum(cdist);
+% end
 
 function [node, ig_best, idx_best] = updateIG(node,ig_best,ig,t,idx,dim,idx_best) % Update information gain
 if ig > ig_best

@@ -38,11 +38,11 @@ for T = 1:length(tree)
         if ~isempty(tree(T).leaf(leaf_idx))
             p(m,:,T) = tree(T).leaf(leaf_idx).prob;
             label(m,T) = tree(T).leaf(leaf_idx).label;
-            
 %             if isfield(tree(T).leaf(leaf_idx),'cc') % for clustering forest
 %                 cc(m,:,T) = tree(T).leaf(leaf_idx).cc;
 %             end
         end
+        
     end
 end
 

@@ -31,28 +31,92 @@ plot_toydata(data_train);
 scatter(data_test(:,1),data_test(:,2),'.b');
 
 
+%%%%%%%%%%%%%%%%%%%%% Bagging %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+frac = 1 - 1/exp(1);
+[N,D] = size(data_train);
+for subset = 1:4
+    idx{subset} = randsample(N,ceil(N*frac),1);
+end
+subset1 = data_train(idx{1,1}(:,1),:);
+subset2 = data_train(idx{1,2}(:,1),:);
+subset3 = data_train(idx{1,3}(:,1),:);
+subset4 = data_train(idx{1,4}(:,1),:);
+figure
+subplot(2,2,1)
+plot_toydata(subset1)
+title('subset 1 by bagging')
+subplot(2,2,2)
+plot_toydata(subset2)
+title('subset 2 by bagging')
+subplot(2,2,3)
+plot_toydata(subset3)
+title('subset 3 by bagging')
+subplot(2,2,4)
+plot_toydata(subset4)
+title('subset 4 by bagging')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 % Set the random forest parameters for instance, 
-param.num = 10;         % Number of trees
+param.num = 100;%10;         % Number of trees
 param.depth = 5;        % trees depth
-param.splitNum = 3;     % Number of split functions to try
+param.splitNum = 30;%3;     % Number of split functions to try
 param.split = 'IG';     % Currently support 'information gain' only
-param.split_func = 1;
+%param.split_func = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%
 % Train Random Forest
+ig_best_split_rho = zeros(50,1);
+for rho = 1:50
+    for split = 1:4
+        param.split_func = split;
+        param.splitNum = rho;
+        [trees,ig_best] = growTrees(subset1,param);
+        ig_best_split_rho(split,rho) = ig_best;
+    end
+end
+
+plot(ig_best_split_rho(1,:),'lineWidth',2,'-o');hold on
+plot(ig_best_split_rho(1,:),'lineWidth',2,'-x');
+plot(ig_best_split_rho(1,:),'lineWidth',2,'-*');
+plot(ig_best_split_rho(1,:),'lineWidth',2,'-.');hold off
+set(gca, 'LineWidth',2,'FontSize',18)
+title('Information gain vs randomness')
+legend('axis-aligned','linear','conic','two-pixel test')
+xlabel('\rho')
+ylabel('Information Gain')
+
+figure;
+visualise_leaf
 
 % Grow all trees
-trees = growTrees(data_train,param);
+% [trees,ig_best] = growTrees(data_train,param);
+% ig_best_cpr = zeros(50,1);
+% for rho = 1:50
+%     param.splitNum = rho;
+%     [trees,ig_best] = growTrees(data_train,param);
+%     ig_best_cpr(rho) = ig_best;
+% end
 
+% ig_best_vs_spfunc = zeros(4,1); %rho set to be 30
+% for split = 1:4
+%     param.split_func = split;
+%      [trees,ig_best] = growTrees(data_train,param);
+%     ig_best_vs_spfunc(split) = ig_best;
+% end
 
-%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%
 % Evaluate/Test Random Forest
-
+        param.split_func = 2;
+        param.splitNum = 30;
+        [trees,ig_best] = growTrees(subset1,param);
 % grab the few data points and evaluate them one by one by the leant RF
 test_point = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
 for n=1:4
     leaves = testTrees([test_point(n,:) 0],trees,param);
-    disp(leaves);
+    % disp(leaves);
     % average the class distributions of leaf nodes of all trees
     p_rf = trees(1).prob(leaves,:);
     p_rf_sum = sum(p_rf)/length(trees);
