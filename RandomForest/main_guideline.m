@@ -68,7 +68,7 @@ param.split = 'IG';     % Currently support 'information gain' only
 
 %%%%%%%%%%%%%%%%%%%%%%
 % Train Random Forest
-ig_best_split_rho = zeros(50,1);
+ig_best_split_rho = zeros(4,50);
 for rho = 1:50
     for split = 1:4
         param.split_func = split;
@@ -78,15 +78,17 @@ for rho = 1:50
     end
 end
 
-plot(ig_best_split_rho(1,:),'lineWidth',2,'-o');hold on
-plot(ig_best_split_rho(1,:),'lineWidth',2,'-x');
-plot(ig_best_split_rho(1,:),'lineWidth',2,'-*');
-plot(ig_best_split_rho(1,:),'lineWidth',2,'-.');hold off
+figure
+plot(1:50,ig_best_split_rho(1,1:50),'-o','LineWidth',2);hold on
+plot(1:50,ig_best_split_rho(2,1:50),'-x','lineWidth',2);
+plot(1:50,ig_best_split_rho(3,1:50),'-*','lineWidth',2);
+plot(1:50,ig_best_split_rho(4,1:50),'-.','lineWidth',2);hold off
 set(gca, 'LineWidth',2,'FontSize',18)
 title('Information gain vs randomness')
 legend('axis-aligned','linear','conic','two-pixel test')
 xlabel('\rho')
 ylabel('Information Gain')
+grid on
 
 figure;
 visualise_leaf
