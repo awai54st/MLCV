@@ -7,7 +7,7 @@ for T = 1:length(tree)
     for m = 1:size(data,1);
         idx = 1;
         
-        while tree(T).node(idx).dim
+        while isempty(tree(T).node(idx).leaf_idx)
             t = tree(T).node(idx).t;
             dim = tree(T).node(idx).dim;
             % Decision
@@ -26,11 +26,27 @@ for T = 1:length(tree)
                 end
                 decision = ([diff,1]*t') > 0;
             end
-            if decision % Pass data to left node
-                idx = idx*2;
+            
+            idxL = idx*2; idxR = idx*2+1;
+            if isempty(tree(T).node(idxR).leaf_idx) && ~tree(T).node(idxR).dim % Empty right branch
+                idx = idxL;
+            elseif ~tree(T).node(idxL).dim && isempty(tree(T).node(idxL).leaf_idx) % Empty left branch
+                idx = idxR;
+            elseif ~tree(T).node(idxL).dim && ~tree(T).node(idxR).dim && isempty(tree(T).node(idxL).leaf_idx) && isempty(tree(T).node(idxR).leaf_idx)
+                error('Error: No children nodes && not a leaf.');
             else
-                idx = idx*2+1; % and to right
+                if decision % Pass data to left node
+                    idx = idxL;
+                else
+                    idx = idxR; % and to right
+                end
             end
+            
+%             if decision % Pass data to left node
+%                 idx = idx*2;
+%             else
+%                 idx = idx*2+1; % and to right
+%             end
             
         end
         leaf_idx = tree(T).node(idx).leaf_idx;

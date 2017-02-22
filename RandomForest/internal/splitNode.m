@@ -1,7 +1,7 @@
 function [ig_best,node,nodeL,nodeR] = splitNode(data,node,param)
 % Split node
 ig_best = -inf;
-visualise = 1;
+visualise = 0;
 
 % Initilise child nodes
 iter = param.splitNum;

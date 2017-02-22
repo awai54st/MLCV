@@ -30,7 +30,7 @@ plot_toydata(data_train);
     
 scatter(data_test(:,1),data_test(:,2),'.b');
 
-
+%% Question 1 Generate 4 subsets 
 %%%%%%%%%%%%%%%%%%%%% Bagging %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 frac = 1 - 1/exp(1);
 [N,D] = size(data_train);
@@ -57,7 +57,15 @@ title('subset 4 by bagging')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Question 1 IG against Randomness (Using pre-generated subset 1)
+clear all; close all; clc;
+init;
+load('subsets.mat');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%% Very Important! %%%%%%%%
+%%% Do not do bagging for this test
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set the random forest parameters for instance, 
 param.num = 100;%10;         % Number of trees
@@ -79,19 +87,19 @@ for rho = 1:200
 end
 
 figure
-plot(1:size(ig_best_split_rho,2),ig_best_split_rho(1,:),'-o','LineWidth',2);hold on
-plot(1:size(ig_best_split_rho,2),ig_best_split_rho(2,:),'-x','lineWidth',2);
-plot(1:size(ig_best_split_rho,2),ig_best_split_rho(3,:),'-*','lineWidth',2);
-plot(1:size(ig_best_split_rho,2),ig_best_split_rho(4,:),'-.','lineWidth',2);hold off
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(1,:),'--','LineWidth',1);hold on
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(2,:),':','lineWidth',1);
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(3,:),'-*','lineWidth',1);
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(4,:),'-','lineWidth',1);hold off
 set(gca, 'LineWidth',2,'FontSize',18)
 title('Information gain vs randomness')
 legend('axis-aligned','linear','conic','two-pixel test')
-xlabel('\rho')
+xlabel('Number of Splitting Trials')
 ylabel('Information Gain')
 grid on
 
 figure;
-visualise_leaf
+visualise_leaf(trees);
 
 % Grow all trees
 % [trees,ig_best] = growTrees(data_train,param);
@@ -109,25 +117,56 @@ visualise_leaf
 %     ig_best_vs_spfunc(split) = ig_best;
 % end
 
-%% %%%%%%%%%%%%%%%%%%%%
+%% Question 2 Evaluate the tree
+
+%%%%%%%%%%%%%%%%%%%%
 % Evaluate/Test Random Forest
-        param.split_func = 2;
-        param.splitNum = 30;
-        [trees,ig_best] = growTrees(subset1,param);
+
+clear all; close all; clc;
+init;
+[data_train, data_test] = getData('Toy_Spiral'); % {'Toy_Gaussian', 'Toy_Spiral', 'Toy_Circle', 'Caltech'}
+       
+
+param.num = 250;%10;         % Number of trees
+param.depth = 5;        % trees depth
+param.splitNum = 20;%3;     % degree of randomness; Number of split functions trials to try
+param.split = 'IG';     % Currently support 'information gain' only
+param.split_func = 1;
+[trees,ig_best] = growTrees(data_train,param);
+
 % grab the few data points and evaluate them one by one by the leant RF
-test_point = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
-for n=1:4
-    leaves = testTrees([test_point(n,:) 0],trees,param);
+%
+% test_point = [-.5 -.7 0; .4 .3 0; -.7 .4 0; .5 -.5 0];
+test_point = data_test(1:end,:);
+p_rf_sum = zeros(3,length(test_point));
+
+% for i = [100,200,300]
+%     for j = [5 10 15 20]
+%         for k = [50 100 150 200 250]
+for n=1:length(test_point)
+    leaves = testTrees(test_point(n,:),trees,param);
     % disp(leaves);
     % average the class distributions of leaf nodes of all trees
     p_rf = trees(1).prob(leaves,:);
-    p_rf_sum = sum(p_rf)/length(trees);
+    p_rf_sum(:,n) = sum(p_rf)/length(trees);
+    [~,test_point(n,3)] = max(p_rf_sum(:,n));
 end
 
-
 % Test on the dense 2D grid data, and visualise the results ... 
-
 % Change the RF parameter values and evaluate ... 
+
+figure
+subplot()
+plot_toydata(data_train); 
+scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerFaceColor', [.9 .5 .5]);%red
+hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerFaceColor', [.5 .9 .5]);%green
+hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerFaceColor', [.5 .5 .9]);
+axis([-1.5 1.5 -1.5 1.5])
+hold off
+%         end
+%     end
+% end
+
 
 
 
