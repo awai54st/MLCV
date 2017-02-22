@@ -31,7 +31,15 @@ elseif split_func==3
     
     % Plot z = 0
     % Notice you need to specify the range [0, 0]
-    contour(u, v, z, [0, 0], 'LineWidth', 2)
+    contour(u, v, z, [-100000000 0 100000000],'k')
+elseif split_func==4
+    x = -1.5:0.1:1.5;
+    if dim==1
+        y = x + t(2);
+    elseif dim==2
+        y = x - t(2);
+    end
+    plot (x,y,'r');
 end
 hold on;
 plot(data(~idx_best,1), data(~idx_best,2), '*', 'MarkerEdgeColor', [.8 .6 .6], 'MarkerSize', 10);

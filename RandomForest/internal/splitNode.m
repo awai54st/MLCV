@@ -1,7 +1,7 @@
 function [ig_best,node,nodeL,nodeR] = splitNode(data,node,param)
 % Split node
 ig_best = -inf;
-visualise = 0;
+visualise = 1;
 
 % Initilise child nodes
 iter = param.splitNum;
@@ -104,12 +104,12 @@ if split_func==1 % Axis-aligned
     idx_ = ([data(:,1:D-1),ones(N,1)]*t') > 0;
 elseif split_func==2 % Linear
     dim = 1;
-    t = 0.01*randn(1,D);
+    t = randn(1,D);
     idx_ = ([data(:,1:D-1),ones(N,1)]*t') > 0;
 elseif split_func==3 % Non-linear
     dim = 1;
     t = zeros(1,D+3);
-    t(1,1:D+3) = 0.01*randn(1,D+3);
+    t(1,1:D+3) = randn(1,D+3);
     data_hd = [data(:,1:D-1),ones(N,1),data(:,1).^2,data(:,2).^2,data(:,1).*data(:,2)];
     idx_ = (data_hd*t') > 0;
 elseif split_func==4 % Two-pixel

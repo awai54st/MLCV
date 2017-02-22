@@ -62,14 +62,14 @@ title('subset 4 by bagging')
 % Set the random forest parameters for instance, 
 param.num = 100;%10;         % Number of trees
 param.depth = 5;        % trees depth
-param.splitNum = 30;%3;     % Number of split functions to try
+param.splitNum = 20;%3;     % Number of split functions to try
 param.split = 'IG';     % Currently support 'information gain' only
-%param.split_func = 1;
+param.split_func = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%
 % Train Random Forest
 ig_best_split_rho = zeros(4,50);
-for rho = 1:50
+for rho = 1:200
     for split = 1:4
         param.split_func = split;
         param.splitNum = rho;
@@ -79,10 +79,10 @@ for rho = 1:50
 end
 
 figure
-plot(1:50,ig_best_split_rho(1,1:50),'-o','LineWidth',2);hold on
-plot(1:50,ig_best_split_rho(2,1:50),'-x','lineWidth',2);
-plot(1:50,ig_best_split_rho(3,1:50),'-*','lineWidth',2);
-plot(1:50,ig_best_split_rho(4,1:50),'-.','lineWidth',2);hold off
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(1,:),'-o','LineWidth',2);hold on
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(2,:),'-x','lineWidth',2);
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(3,:),'-*','lineWidth',2);
+plot(1:size(ig_best_split_rho,2),ig_best_split_rho(4,:),'-.','lineWidth',2);hold off
 set(gca, 'LineWidth',2,'FontSize',18)
 title('Information gain vs randomness')
 legend('axis-aligned','linear','conic','two-pixel test')
