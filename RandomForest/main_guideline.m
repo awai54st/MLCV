@@ -81,7 +81,7 @@ for rho = 1:200
     for split = 1:4
         param.split_func = split;
         param.splitNum = rho;
-        [trees,ig_best] = growTrees(subset1,param);
+        [trees,ig_best] = growTrees_nobag(subset1,param);
         ig_best_split_rho(split,rho) = ig_best;
     end
 end
