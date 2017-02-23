@@ -8,7 +8,7 @@
 
 % Under BSD Licence
 
-%% 
+%%
 clear all; close all; clc;
 % Initialisation
 init;
@@ -19,18 +19,18 @@ init;
 
 %%%%%%%%%%%%%
 % check the training and testing data
-    % data_train(:,1:2) : [num_data x dim] Training 2D vectors
-    % data_train(:,3) : [num_data x 1] Labels of training data, {1,2,3}
-    
+% data_train(:,1:2) : [num_data x dim] Training 2D vectors
+% data_train(:,3) : [num_data x 1] Labels of training data, {1,2,3}
+
 plot_toydata(data_train);
 
-    % data_test(:,1:2) : [num_data x dim] Testing 2D vectors, 2D points in the
-    % uniform dense grid within the range of [-1.5, 1.5]
-    % data_train(:,3) : N/A
-    
+% data_test(:,1:2) : [num_data x dim] Testing 2D vectors, 2D points in the
+% uniform dense grid within the range of [-1.5, 1.5]
+% data_train(:,3) : N/A
+
 scatter(data_test(:,1),data_test(:,2),'.b');
 
-%% Question 1 Generate 4 subsets 
+%% Question 1 Generate 4 subsets
 %%%%%%%%%%%%%%%%%%%%% Bagging %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 frac = 1 - 1/exp(1);
 [N,D] = size(data_train);
@@ -67,7 +67,7 @@ load('subsets.mat');
 %%% Do not do bagging for this test
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Set the random forest parameters for instance, 
+% Set the random forest parameters for instance,
 param.num = 100;%10;         % Number of trees
 param.depth = 5;        % trees depth
 param.splitNum = 20;%3;     % Number of split functions to try
@@ -125,14 +125,14 @@ visualise_leaf(trees);
 clear all; close all; clc;
 init;
 [data_train, data_test] = getData('Toy_Spiral'); % {'Toy_Gaussian', 'Toy_Spiral', 'Toy_Circle', 'Caltech'}
-       
 
-param.num = 250;%10;         % Number of trees
-param.depth = 5;        % trees depth
-param.splitNum = 20;%3;     % degree of randomness; Number of split functions trials to try
+
+% param.num = 250;%10;         % Number of trees
+% param.depth = 5;        % trees depth
+% param.splitNum = 20;%3;     % degree of randomness; Number of split functions trials to try
 param.split = 'IG';     % Currently support 'information gain' only
-param.split_func = 1;
-[trees,ig_best] = growTrees(data_train,param);
+param.split_func = 3;
+% [trees,ig_best] = growTrees(data_train,param);
 
 % grab the few data points and evaluate them one by one by the leant RF
 %
@@ -140,39 +140,47 @@ param.split_func = 1;
 test_point = data_test(1:end,:);
 p_rf_sum = zeros(3,length(test_point));
 
+counter = 0;
 % for i = [100,200,300]
-%     for j = [5 10 15 20]
-%         for k = [50 100 150 200 250]
-for n=1:length(test_point)
-    leaves = testTrees(test_point(n,:),trees,param);
-    % disp(leaves);
-    % average the class distributions of leaf nodes of all trees
-    p_rf = trees(1).prob(leaves,:);
-    p_rf_sum(:,n) = sum(p_rf)/length(trees);
-    [~,test_point(n,3)] = max(p_rf_sum(:,n));
+i = 100;
+for j = [5 10 15 20]
+    for k = [50 100 150 200 250]
+        counter = counter+1;
+        param.num = i;
+        param.depth = j;
+        param.splitNum = k;
+        [trees,ig_best] = growTrees(data_train,param);
+        
+        for n=1:length(test_point)
+            leaves = testTrees(test_point(n,:),trees,param);
+            % disp(leaves);
+            % average the class distributions of leaf nodes of all trees
+            p_rf = trees(1).prob(leaves,:);
+            p_rf_sum(:,n) = sum(p_rf)/length(trees);
+            [~,test_point(n,3)] = max(p_rf_sum(:,n));
+        end
+        figure
+        subplot(4,5,counter)
+        plot_toydata(data_train);
+        scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerFaceColor', [.9 .5 .5]);%red
+        hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerFaceColor', [.5 .9 .5]);%green
+        hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerFaceColor', [.5 .5 .9]);
+        axis([-1.5 1.5 -1.5 1.5])
+        title([num2str(i) 'trees', num2str(j) 'levels', num2str(k) 'split trials' ])
+        hold off
+        
+        %         end
+    end
 end
-
-% Test on the dense 2D grid data, and visualise the results ... 
-% Change the RF parameter values and evaluate ... 
-
-figure
-subplot()
-plot_toydata(data_train); 
-scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerFaceColor', [.9 .5 .5]);%red
-hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerFaceColor', [.5 .9 .5]);%green
-hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerFaceColor', [.5 .5 .9]);
-axis([-1.5 1.5 -1.5 1.5])
-hold off
-%         end
-%     end
-% end
+% Test on the dense 2D grid data, and visualise the results ...
+% Change the RF parameter values and evaluate ...
 
 
 
 
 
-%% 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %experiment with Caltech101 dataset for image categorisation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -192,7 +200,7 @@ close all;
 % show accuracy and confusion matrix ...
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % random forest codebook for Caltech101 image categorisation
 % .....
 
