@@ -117,6 +117,64 @@ visualise_leaf(trees);
 %     ig_best_vs_spfunc(split) = ig_best;
 % end
 
+%% Question 2 part 1 - four testing points
+clear all; close all; clc;
+init;
+% Select dataset
+[data_train, data_test] = getData('Toy_Spiral'); % {'Toy_Gaussian', 'Toy_Spiral', 'Toy_Circle', 'Caltech'}
+
+
+param.num = 4;%10;         % Number of trees
+param.depth = 5;        % trees depth
+param.splitNum = 20;%3;     % Number of split functions to try
+param.split = 'IG';     % Currently support 'information gain' only
+param.split_func = 3;
+
+%%%%%%%%%%%%%%%%%%%%%%
+% Train Random Forest
+[trees,ig_best] = growTrees(data_train,param);
+test_point = [-.5 -.7 0; .4 .3 0; -.7 .4 0; .5 -.5 0];
+for n=1:length(test_point)
+    leaves = testTrees(test_point(n,:),trees,param);
+    % disp(leaves);
+    % average the class distributions of leaf nodes of all trees
+    p_rf = trees(1).prob(leaves,:);
+    p_rf_sum(:,n) = sum(p_rf)/length(trees);
+    [~,test_point(n,3)] = max(p_rf_sum(:,n));
+    
+end
+
+
+
+for n=1:length(data_test)
+    leaves = testTrees(data_test(n,:),trees,param);
+    % disp(leaves);
+    % average the class distributions of leaf nodes of all trees
+    p_rf = trees(1).prob(leaves,:);
+    p_rf_sum(:,n) = sum(p_rf)/length(trees);
+    [~,data_test(n,3)] = max(p_rf_sum(:,n));
+    
+end
+
+figure
+h_mesh = scatter(data_test(data_test(:,end)==1,1), data_test(data_test(:,end)==1,2), '.', 'MarkerEdgeColor', [.9 .5 .5]);%red
+hold on; scatter(data_test(data_test(:,end)==2,1), data_test(data_test(:,end)==2,2), '.', 'MarkerEdgeColor', [.5 .9 .5]);%green
+hold on; scatter(data_test(data_test(:,end)==3,1), data_test(data_test(:,end)==3,2), '.', 'MarkerEdgeColor', [.5 .5 .9]);
+axis([-1.5 1.5 -1.5 1.5])
+h_train = plot(data_train(data_train(:,end)==1,1), data_train(data_train(:,end)==1,2), 'o', 'MarkerFaceColor', [.9 .5 .5], 'MarkerEdgeColor','k');
+hold on; %red
+plot(data_train(data_train(:,end)==2,1), data_train(data_train(:,end)==2,2), 'o', 'MarkerFaceColor', [.5 .9 .5], 'MarkerEdgeColor','k');
+hold on;%green
+plot(data_train(data_train(:,end)==3,1), data_train(data_train(:,end)==3,2), 'o', 'MarkerFaceColor', [.5 .5 .9], 'MarkerEdgeColor','k');
+axis([-1.5 1.5 -1.5 1.5]);%blue
+hold on;
+
+h_test = scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), 'd', 'MarkerFaceColor', [.9 .5 .5], 'MarkerEdgeColor','k');%red
+hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), 'd', 'MarkerFaceColor', [.5 .9 .5], 'MarkerEdgeColor','k');%green
+hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), 'd', 'MarkerFaceColor', [.5 .5 .9], 'MarkerEdgeColor','k'); hold on
+axis([-1.5 1.5 -1.5 1.5])
+title('Four Test Points Classification Results')
+legend([h_train,h_test,h_mesh],'Training Point','Test Point','Prediction Mesh');
 %% Question 2 Evaluate the tree
 
 %%%%%%%%%%%%%%%%%%%%
@@ -139,11 +197,12 @@ param.split_func = 3;
 % test_point = [-.5 -.7 0; .4 .3 0; -.7 .4 0; .5 -.5 0];
 test_point = data_test(1:end,:);
 p_rf_sum = zeros(3,length(test_point));
-
+figure
 counter = 0;
+labels = zeros(length(test_point),15);
 % for i = [100,200,300]
 i = 100;
-for j = [5 10 15 20]
+for j = [5 10 15]
     for k = [50 100 150 200 250]
         counter = counter+1;
         param.num = i;
@@ -158,15 +217,16 @@ for j = [5 10 15 20]
             p_rf = trees(1).prob(leaves,:);
             p_rf_sum(:,n) = sum(p_rf)/length(trees);
             [~,test_point(n,3)] = max(p_rf_sum(:,n));
+            
         end
-        figure
+        labels(:,counter) = test_point(:,3); %col1 is the label for i = 5 k = 50;
         subplot(4,5,counter)
-        plot_toydata(data_train);
+        plot_toydata(data_train);hold on;
         scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerFaceColor', [.9 .5 .5]);%red
         hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerFaceColor', [.5 .9 .5]);%green
         hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerFaceColor', [.5 .5 .9]);
         axis([-1.5 1.5 -1.5 1.5])
-        title([num2str(i) 'trees', num2str(j) 'levels', num2str(k) 'split trials' ])
+        title([num2str(i) 'trees,', num2str(j) 'levels,', num2str(k) 'split trials' ])
         hold off
         
         %         end
