@@ -117,7 +117,7 @@ visualise_leaf(trees);
 %     ig_best_vs_spfunc(split) = ig_best;
 % end
 
-%% Question 2 part 1 - four testing points
+%% Question 2 part 1 - four testing points using four trees
 clear all; close all; clc;
 init;
 % Select dataset
@@ -143,8 +143,6 @@ for n=1:length(test_point)
     [~,test_point(n,3)] = max(p_rf_sum(:,n));
     
 end
-
-
 
 for n=1:length(data_test)
     leaves = testTrees(data_test(n,:),trees,param);
@@ -189,53 +187,186 @@ init;
 % param.depth = 5;        % trees depth
 % param.splitNum = 20;%3;     % degree of randomness; Number of split functions trials to try
 param.split = 'IG';     % Currently support 'information gain' only
-param.split_func = 3;
+%param.split_func = 3;
 % [trees,ig_best] = growTrees(data_train,param);
 
 % grab the few data points and evaluate them one by one by the leant RF
 %
-% test_point = [-.5 -.7 0; .4 .3 0; -.7 .4 0; .5 -.5 0];
 test_point = data_test(1:end,:);
 p_rf_sum = zeros(3,length(test_point));
+
+
 figure
 counter = 0;
-labels = zeros(length(test_point),15);
-% for i = [100,200,300]
-i = 100;
-for j = [5 10 15]
-    for k = [50 100 150 200 250]
-        counter = counter+1;
-        param.num = i;
-        param.depth = j;
-        param.splitNum = k;
-        [trees,ig_best] = growTrees(data_train,param);
-        
-        for n=1:length(test_point)
-            leaves = testTrees(test_point(n,:),trees,param);
-            % disp(leaves);
-            % average the class distributions of leaf nodes of all trees
-            p_rf = trees(1).prob(leaves,:);
-            p_rf_sum(:,n) = sum(p_rf)/length(trees);
-            [~,test_point(n,3)] = max(p_rf_sum(:,n));
-            
-        end
-        labels(:,counter) = test_point(:,3); %col1 is the label for i = 5 k = 50;
-        subplot(4,5,counter)
-        plot_toydata(data_train);hold on;
-        scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerFaceColor', [.9 .5 .5]);%red
-        hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerFaceColor', [.5 .9 .5]);%green
-        hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerFaceColor', [.5 .5 .9]);
-        axis([-1.5 1.5 -1.5 1.5])
-        title([num2str(i) 'trees,', num2str(j) 'levels,', num2str(k) 'split trials' ])
-        hold off
-        
-        %         end
+%column 1
+for i = [1 2 3 4]
+    counter = counter+1;
+    param.split_func = i; %spliting method
+    param.splitNum = 20; %rho
+    param.num = 4; %number of trees
+    param.depth = 5;
+    [trees,ig_best] = growTrees(data_train,param);
+    
+    for n=1:length(test_point)
+        leaves = testTrees(test_point(n,:),trees,param);
+        % average the class distributions of leaf nodes of all trees
+        p_rf = trees(1).prob(leaves,:);
+        p_rf_sum(:,n) = sum(p_rf)/length(trees);
+        [~,test_point(n,3)] = max(p_rf_sum(:,n));
     end
+    
+    subplot(2,2,counter)
+    scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerEdgeColor', [.9 .5 .5]);%red
+    hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerEdgeColor', [.5 .9 .5]);%green
+    hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerEdgeColor', [.5 .5 .9]);
+    axis([-1.5 1.5 -1.5 1.5])   
+    plot_toydata(data_train);hold on;
+    
+    if i == 1
+        title('axis aligned');
+    end
+    if i == 2
+        title('linear');
+    end
+    if i ==3
+        title('conic');
+    end
+    if i ==4
+        title('two-pixel test');
+    end
+    hold off
+    
 end
+
 % Test on the dense 2D grid data, and visualise the results ...
 % Change the RF parameter values and evaluate ...
 
+figure
+counter = 0;
+%column 1
+for i = [50 100 150 200]
+    counter = counter+1;
+    param.split_func = 3;
+    param.splitNum = i;
+    param.num = 4;
+    param.depth = 5;
+    [trees,ig_best] = growTrees(data_train,param);
+    
+    for n=1:length(test_point)
+        leaves = testTrees(test_point(n,:),trees,param);
+        % average the class distributions of leaf nodes of all trees
+        p_rf = trees(1).prob(leaves,:);
+        p_rf_sum(:,n) = sum(p_rf)/length(trees);
+        [~,test_point(n,3)] = max(p_rf_sum(:,n));
+    end
+    
+    subplot(2,2,counter)
+    scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerEdgeColor', [.9 .5 .5]);%red
+    hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerEdgeColor', [.5 .9 .5]);%green
+    hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerEdgeColor', [.5 .5 .9]);
+    axis([-1.5 1.5 -1.5 1.5])   
+    plot_toydata(data_train);hold on;
+    
+    if i == 50
+        title('50 splitting trials');
+    end
+    if i == 100
+        title('100 splitting trials');
+    end
+    if i == 150 
+        title('150 splitting trials');
+    end
+    if i == 200
+        title('200 splitting trials');
+    end
+    hold off
+    
+end
 
+
+figure
+counter = 0;
+%column 1
+for i = [10 50 100 200]
+    counter = counter+1;
+    param.split_func = 3;
+    param.splitNum = 150;
+    param.num = i;
+    param.depth = 5;
+    [trees,ig_best] = growTrees(data_train,param);
+    
+    for n=1:length(test_point)
+        leaves = testTrees(test_point(n,:),trees,param);
+        % average the class distributions of leaf nodes of all trees
+        p_rf = trees(1).prob(leaves,:);
+        p_rf_sum(:,n) = sum(p_rf)/length(trees);
+        [~,test_point(n,3)] = max(p_rf_sum(:,n));
+    end
+    
+    subplot(2,2,counter)
+    scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerEdgeColor', [.9 .5 .5]);%red
+    hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerEdgeColor', [.5 .9 .5]);%green
+    hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerEdgeColor', [.5 .5 .9]);
+    axis([-1.5 1.5 -1.5 1.5])   
+    plot_toydata(data_train);hold on;
+    
+    if i == 10
+        title('10 trees');
+    end
+    if i == 50
+        title('50 trees');
+    end
+    if i == 100 
+        title('100 trees');
+    end
+    if i == 200
+        title('200 trees');
+    end
+    hold off
+    
+end
+
+figure
+counter = 0;
+%column 1
+for i = [6 8 10 12]
+    counter = counter+1;
+    param.split_func = 3;
+    param.splitNum = 150;
+    param.num = 200; % double check, maybe 100 ia acceptable as well
+    param.depth = i;
+    [trees,ig_best] = growTrees(data_train,param);
+    
+    for n=1:length(test_point)
+        leaves = testTrees(test_point(n,:),trees,param);
+        % average the class distributions of leaf nodes of all trees
+        p_rf = trees(1).prob(leaves,:);
+        p_rf_sum(:,n) = sum(p_rf)/length(trees);
+        [~,test_point(n,3)] = max(p_rf_sum(:,n));
+    end
+    
+    subplot(2,2,counter)
+    scatter(test_point(test_point(:,end)==1,1), test_point(test_point(:,end)==1,2), '.', 'MarkerEdgeColor', [.9 .5 .5]);%red
+    hold on; scatter(test_point(test_point(:,end)==2,1), test_point(test_point(:,end)==2,2), '.', 'MarkerEdgeColor', [.5 .9 .5]);%green
+    hold on; scatter(test_point(test_point(:,end)==3,1), test_point(test_point(:,end)==3,2), '.', 'MarkerEdgeColor', [.5 .5 .9]);
+    axis([-1.5 1.5 -1.5 1.5])   
+    plot_toydata(data_train);hold on;
+    
+    if i == 8
+        title('8 levels');
+    end
+    if i == 10
+        title('10 levels');
+    end
+    if i == 6 
+        title('6 levels');
+    end
+    if i == 12
+        title('12 levels');
+    end
+    hold off
+    
+end
 
 
 
