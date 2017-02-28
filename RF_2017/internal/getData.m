@@ -5,7 +5,7 @@ function [ data_train, data_query ] = getData( MODE )
 %   4. Caltech 101
 data_train = [];
 data_query = [];
-showImg = 1; % Show training & testing images and their image feature vector (histogram representation)
+showImg = 0; % Show training & testing images and their image feature vector (histogram representation)
 
 PHOW_Sizes = [4 8 10]; % Multi-resolution, these values determine the scale of each layer.
 PHOW_Step = 8; % The lower the denser. Select from {2,4,8,16}
@@ -49,8 +49,7 @@ switch MODE
                 
                 % For details of image description, see http://www.vlfeat.org/matlab/vl_phow.html
                 [~, desc_tr{c,i}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step); %  extracts PHOW features (multi-scaled Dense SIFT)
-                   
-%                 bag = bagOfFeatures(I,'Verbose',false);
+                
             end     
         end
         
@@ -61,24 +60,40 @@ switch MODE
         
         % K-means clustering
         numBins = 256; % for instance,
+        cluster_centers = kmeans(desc_sel,numBins);
         
         %Training data: vectors are histograms, one from each training image
         % write your own codes here
         % ...
-        cluster_centers = kmeans(desc_sel,numBins);
+        
 
+        %histogram(hist_tr{1,1},numBins);
         
         disp('Encoding Images...')
         % Vector Quantisation
         
         % write your own codes here
         % ...
-        desc_tr = single(vl_colsubset(cat(2,desc_tr{:}), 10e4));
-
+        numClasses = length(classList);
+        sizeClasses = length(imgIdx_tr);
+        training_data = zeros(numBins,numClasses*sizeClasses);
+        training_label = zeros(1,numClasses*sizeClasses);
         
+        for idx_tr = 1:numClasses
+            label = idx_tr;
+            for idy_tr = 1:sizeClasses
+                hist_tmp = knnsearch(cluster_centers',single(desc_tr{idx_tr,idy_tr})');
+                
+                training_data(:,idy_tr+(idx_tr-1)*sizeClasses) = histcounts(hist_tmp,numBins)';
+                training_label(idy_tr+(idx_tr-1)*sizeClasses) = label;
+                %hist_tr{idx_tr,idy_tr} = cluster_list; % Archive cluster lists
+            end
+        end
+
+        data_train = [training_data;training_label]';
         
         % Clear unused varibles to save memory
-        clearvars desc_tr desc_sel
+        clearvars desc_tr desc_sel hist_tmp I training_data training_label
 end
 
 
@@ -112,7 +127,7 @@ switch MODE
                 end
                 [~, desc_te{c,i}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step);
                  %desc_sel1{c,i} 
-                 temp= single(vl_colsubset(cat(2,desc_te{c,i}), 2000)); % Randomly select 100k SIFT descriptors for clustering
+                 %temp= single(vl_colsubset(cat(2,desc_te{c,i}), 2000)); % Randomly select 100k SIFT descriptors for clustering
         
                 
             end
@@ -127,9 +142,23 @@ switch MODE
         
         % write your own codes here
         % ...
+        numClasses = length(classList);
+        sizeClasses = length(imgIdx_te);
+        test_data = zeros(numBins,numClasses*sizeClasses);
+        test_label = zeros(1,numClasses*sizeClasses);
         
+        for idx_te = 1:numClasses
+            label = idx_te;
+            for idy_te = 1:sizeClasses
+                hist_tmp = knnsearch(cluster_centers',single(desc_te{idx_te,idy_te})');
+                
+                test_data(:,idy_te+(idx_te-1)*sizeClasses) = histcounts(hist_tmp,numBins)';
+                test_label(idy_te+(idx_te-1)*sizeClasses) = label;
+                %hist_tr{idx_tr,idy_tr} = cluster_list; % Archive cluster lists
+            end
+        end
         
-        
+        data_query = [test_data;test_label]';
 
         
         

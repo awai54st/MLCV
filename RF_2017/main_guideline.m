@@ -13,9 +13,30 @@ close all;
 
 
 % Set the random forest parameters ...
+param.num = 150;%10; % Number of trees
+param.depth = 5; % trees depth
+param.splitNum = 150;%3; % Number of split functions to try
+param.split = 'IG'; % Currently support 'information gain' only
+param.split_func = 2;
+
 % Train Random Forest ...
+[trees,ig_best] = growTrees(data_train,param);
+
 % Evaluate/Test Random Forest ...
+predictions = zeros(size(data_test,1),1);
+p_rf_sum = zeros(10,size(data_test,1));
+
+for n=1:size(data_test,1)
+leaves = testTrees(data_test(n,:),trees,param);
+% disp(leaves);
+% average the class distributions of leaf nodes of all trees
+p_rf = trees(1).prob(leaves,:);
+p_rf_sum(:,n) = sum(p_rf)/length(trees);
+[~,predictions(n)] = max(p_rf_sum(:,n));
+end
+
 % show accuracy and confusion matrix ...
+accuracy = sum(predictions==data_test(:,257))/size(data_test,1);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 

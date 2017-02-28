@@ -1,11 +1,45 @@
-function visualise_splitfunc(idx_best,data,dim,t,ig_best,iter) % Draw the split line
+function visualise_splitfunc(idx_best,data,dim,t,ig_best,iter,split_func) % Draw the split line
 r = [-1.5 1.5]; % Data range
 
 subplot(2,2,1);
-if dim == 1
-    plot([t t],[r(1),r(2)],'r');
-else
-    plot([r(1),r(2)],[t t],'r');
+[N,D] = size(data);
+if split_func==1
+    if dim == 1
+        th = -t(3);
+        plot([th th],[r(1),r(2)],'r');
+    else
+        th = -t(3);
+        plot([r(1),r(2)],[th th],'r');
+    end
+elseif split_func==2
+    x = -1.5:0.1:1.5;
+    y = -(t(1).*x+t(3))./t(2);
+    plot (x,y,'r');
+elseif split_func==3
+    % Here is the grid range
+    u = linspace(-1.5, 1.5, 50);
+    v = linspace(-1.5, 1.5, 50);
+    
+    z = zeros(length(u), length(v));
+    % Evaluate z = theta*x over the grid
+    for i = 1:length(u)
+        for j = 1:length(v)
+            z(i,j) = [u(i), v(j),1,u(i)^2,v(i)^2,u(i)*v(i)]*t';
+        end
+    end
+    z = z'; % important to transpose z before calling contour
+    
+    % Plot z = 0
+    % Notice you need to specify the range [0, 0]
+    contour(u, v, z, [-100000000 0 100000000],'k')
+elseif split_func==4
+    x = -1.5:0.1:1.5;
+    if dim==1
+        y = x + t(2);
+    elseif dim==2
+        y = x - t(2);
+    end
+    plot (x,y,'r');
 end
 hold on;
 plot(data(~idx_best,1), data(~idx_best,2), '*', 'MarkerEdgeColor', [.8 .6 .6], 'MarkerSize', 10);
