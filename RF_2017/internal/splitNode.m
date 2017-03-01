@@ -89,36 +89,32 @@ end
 
 function [idx_,dim,t] = weak_learner(data,N,D,split_func)
 if split_func==1 % Axis-aligned
-%     dim = randi(D-1); % Pick one random dimension
-%     d_min = single(min(data(:,dim))) + eps; % Find the data range of this dimension
-%     d_max = single(max(data(:,dim))) - eps;
-%     t = d_min + rand*((d_max-d_min)); % Pick a random value within the range as threshold
-%     idx_ = data(:,dim) < t;
-    
     dim = randi(D-1); % Pick one random dimension
     d_min = single(min(data(:,dim))) + eps; % Find the data range of this dimension
     d_max = single(max(data(:,dim))) - eps;
-    t = zeros(1,D);
-    t(dim) = 1;
-    t(D) = d_min + rand*((d_max-d_min));
-    idx_ = ([data(:,1:D-1),ones(N,1)]*t') > 0;
+    t = d_min + rand*((d_max-d_min)); % Pick a random value within the range as threshold
+    idx_ = data(:,dim) < t;
+    
+%     dim = randi(D-1); % Pick one random dimension
+%     d_min = single(min(data(:,dim))) + eps; % Find the data range of this dimension
+%     d_max = single(max(data(:,dim))) - eps;
+%     t = zeros(1,D);
+%     t(dim) = 1;
+%     t(D) = d_min + rand*((d_max-d_min));
+%     idx_ = ([data(:,1:D-1),ones(N,1)]*t') > 0;
 elseif split_func==2 % Linear
     dim = 1;
     t = randn(1,D);
     idx_ = ([data(:,1:D-1),ones(N,1)]*t') > 0;
 elseif split_func==3 % Non-linear
-    dim = 1;
+    dim = datasample(1:D-1,2,'Replace',false);% Pick two random dimensions
     t = zeros(1,D+3);
     t(1,1:D+3) = randn(1,D+3);
-    data_hd = [data(:,1:D-1),ones(N,1),data(:,1).^2,data(:,2).^2,data(:,1).*data(:,2)];
+    data_hd = [data(:,1:D-1),ones(N,1),data(:,dim(1)).^2,data(:,dim(2)).^2,data(:,dim(1)).*data(:,dim(2))];
     idx_ = (data_hd*t') > 0;
 elseif split_func==4 % Two-pixel
-    dim = randi(D-1); % Pick one random dimension
-    if dim==1
-        diff = data(:,1)-data(:,2);
-    elseif dim==2
-        diff = data(:,2)-data(:,1);
-    end
+    dim = datasample(1:D-1,2,'Replace',false);% Pick two random dimensions
+    diff = data(:,dim(1))-data(:,dim(2));
     d_min = single(min(diff(:,1))) + eps; % Find the data range of this dimension
     d_max = single(max(diff(:,1))) - eps;
     t = zeros(1,2);

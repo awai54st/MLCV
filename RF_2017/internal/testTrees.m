@@ -13,26 +13,24 @@ for T = 1:length(tree)
             % Decision
 %             if data(m,dim) < t % Pass data to left node
             split_func = param.split_func;
-            if split_func==1 || split_func==2
+            if split_func==1 
+                decision = data(m,dim) < t;
+            elseif split_func==2
                 decision = [data(m,1:D-1),1]*t' > 0;
             elseif split_func==3
-                data_hd = [data(m,1:D-1),1,data(m,1).^2,data(m,2).^2,data(m,1).*data(m,2)];
+                data_hd = [data(m,1:D-1),1,data(m,dim(1)).^2,data(m,dim(2)).^2,data(m,dim(1)).*data(m,dim(2))];
                 decision = (data_hd(m,:)*t') > 0;
             elseif split_func==4
-                if dim==1
-                    diff = data(m,1)-data(m,2);
-                elseif dim==2
-                    diff = data(m,2)-data(m,1);
-                end
+                diff = data(m,dim(1))-data(m,dim(2));
                 decision = ([diff,1]*t') > 0;
             end
             
             idxL = idx*2; idxR = idx*2+1;
-            if isempty(tree(T).node(idxR).leaf_idx) && ~tree(T).node(idxR).dim % Empty right branch
+            if isempty(tree(T).node(idxR).leaf_idx) && all(~tree(T).node(idxR).dim) % Empty right branch
                 idx = idxL;
-            elseif ~tree(T).node(idxL).dim && isempty(tree(T).node(idxL).leaf_idx) % Empty left branch
+            elseif all(~tree(T).node(idxL).dim) && isempty(tree(T).node(idxL).leaf_idx) % Empty left branch
                 idx = idxR;
-            elseif ~tree(T).node(idxL).dim && ~tree(T).node(idxR).dim && isempty(tree(T).node(idxL).leaf_idx) && isempty(tree(T).node(idxR).leaf_idx)
+            elseif all(~tree(T).node(idxL).dim) && all(~tree(T).node(idxR).dim) && isempty(tree(T).node(idxL).leaf_idx) && isempty(tree(T).node(idxR).leaf_idx)
                 error('Error: No children nodes && not a leaf.');
             else
                 if decision % Pass data to left node

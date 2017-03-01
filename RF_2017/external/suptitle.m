@@ -33,7 +33,7 @@ figunits = get(gcf,'units');
 		set(gcf,'units','pixels');
 		pos = get(gcf,'position');
 		set(gcf,'units',figunits);
-    else
+	else,
 		pos = get(gcf,'position');
 	end
 	ff = (fs-4)*1.27*5/pos(4)*fudge;
@@ -71,7 +71,7 @@ for i=1:length(h),
 		pos=get(h(i),'pos');
 		if (pos(2) < min_y), min_y=pos(2)-ff/5*3;end;
 		if (pos(4)+pos(2) > max_y), max_y=pos(4)+pos(2)+ff/5*2;end;
-    else
+	else,
 		oldtitle = h(i);
 	end
 end
@@ -88,13 +88,13 @@ end
 
 np = get(gcf,'nextplot');
 set(gcf,'nextplot','add');
-if (oldtitle)
+if (oldtitle),
 	delete(oldtitle);
 end
 ha=axes('pos',[0 1 1 1],'visible','off','Tag','suptitle');
 ht=text(.5,titleypos-1,str);set(ht,'horizontalalignment','center','fontsize',fs);
 set(gcf,'nextplot',np);
 axes(haold);
-if nargout
+if nargout,
 	hout=ht;
 end
