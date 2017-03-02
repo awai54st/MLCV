@@ -156,9 +156,9 @@ switch MODE
         end
         
         % Set the random forest parameters ...
-        param_codebook.num = 20;%10; % Number of trees
+        param_codebook.num = 200;%10; % Number of trees
         param_codebook.depth = 5; % trees depth
-        param_codebook.splitNum = 50;%3; % Number of split functions to try
+        param_codebook.splitNum = 150;%3; % Number of split functions to try
         param_codebook.split = 'IG'; % Currently support 'information gain' only
         param_codebook.split_func = 1;
         
@@ -180,8 +180,8 @@ switch MODE
             label = idx_tr;
             for idy_tr = 1:sizeClass
                 desc_tmp = [single(desc_tr{idx_tr,idy_tr}'),ones(size(desc_tr{idx_tr,idy_tr},2),1)];
-                k = randperm(size(desc_tr{idx_tr,idy_tr},2));
-                desc_tmp = desc_tmp(k(1:1000),:);
+%                 k = randperm(size(desc_tr{idx_tr,idy_tr},2));
+%                 desc_tmp = desc_tmp(k(1:1000),:);
                 leaves = testTrees(desc_tmp,tree_codebook,param_codebook);
                 training_data(idy_tr+(idx_tr-1)*sizeClass,:) = histcounts(leaves(:),numBins);
                 training_label(idy_tr+(idx_tr-1)*sizeClass) = label;
@@ -317,8 +317,8 @@ switch MODE
             label = idx_te;
             for idy_te = 1:sizeClass
                 desc_tmp = [single(desc_te{idx_te,idy_te}'),ones(size(desc_te{idx_te,idy_te},2),1)];
-                k = randperm(size(desc_te{idx_te,idy_te},2));
-                desc_tmp = desc_tmp(k(1:1000),:);
+%                 k = randperm(size(desc_te{idx_te,idy_te},2));
+%                 desc_tmp = desc_tmp(k(1:1000),:);
                 
 %                 desc_tmp = [single(desc_te{idx_te,idy_te}'),ones(size(desc_te{idx_te,idy_te},2),1)];
                 leaves = testTrees(desc_tmp,tree_codebook,param_codebook);

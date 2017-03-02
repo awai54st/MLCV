@@ -3,7 +3,10 @@ function label = testTrees(data,tree,param)
 
 cc = [];
 [N,D] = size(data);
-for T = 1:length(tree)
+len_T = length(tree); len_m = size(data,1);
+label = [];
+parfor T = 1:length(tree)
+    label_tmp = zeros(len_m,1);
     for m = 1:size(data,1);
         idx = 1;
         
@@ -48,16 +51,18 @@ for T = 1:length(tree)
             
         end
         leaf_idx = tree(T).node(idx).leaf_idx;
-        
         if ~isempty(tree(T).leaf(leaf_idx))
-            p(m,:,T) = tree(T).leaf(leaf_idx).prob;
-            label(m,T) = tree(T).leaf(leaf_idx).label;
+%             p(m,:,T) = tree(T).leaf(leaf_idx).prob;
+%             label_tmp = [label_tmp;tree(T).leaf(leaf_idx).label];
+            label_tmp(m) = tree(T).leaf(leaf_idx).label;
+%             label(m,T) = tree(T).leaf(leaf_idx).label;
 %             if isfield(tree(T).leaf(leaf_idx),'cc') % for clustering forest
 %                 cc(m,:,T) = tree(T).leaf(leaf_idx).cc;
 %             end
         end
         
     end
+    label = [label,label_tmp];
 end
 
 end
