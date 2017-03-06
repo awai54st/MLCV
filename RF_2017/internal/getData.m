@@ -156,9 +156,9 @@ switch MODE
         end
         
         % Set the random forest parameters ...
-        param_codebook.num = 200;%10; % Number of trees
+        param_codebook.num = 150;%10; % Number of trees
         param_codebook.depth = 5; % trees depth
-        param_codebook.splitNum = 150;%3; % Number of split functions to try
+        param_codebook.splitNum = 5;%3; % Number of split functions to try
         param_codebook.split = 'IG'; % Currently support 'information gain' only
         param_codebook.split_func = 1;
         
@@ -173,23 +173,30 @@ switch MODE
         % ...
         numBins = size(tree_codebook(1).prob,1);
 
-        training_data = zeros(numClass*sizeClass,numBins);
-        training_label = zeros(numClass*sizeClass,1);
+%         training_data = zeros(numClass*sizeClass,numBins)
+        training_data = cell(numClass,1);
+        training_label = cell(numClass,1);
         
-        for idx_tr = 1:numClass
+        parfor idx_tr = 1:numClass
             label = idx_tr;
+            training_data_tmp = zeros(sizeClass,numBins);
+            training_label_tmp = zeros(sizeClass,1);
             for idy_tr = 1:sizeClass
                 desc_tmp = [single(desc_tr{idx_tr,idy_tr}'),ones(size(desc_tr{idx_tr,idy_tr},2),1)];
 %                 k = randperm(size(desc_tr{idx_tr,idy_tr},2));
 %                 desc_tmp = desc_tmp(k(1:1000),:);
                 leaves = testTrees(desc_tmp,tree_codebook,param_codebook);
-                training_data(idy_tr+(idx_tr-1)*sizeClass,:) = histcounts(leaves(:),numBins);
-                training_label(idy_tr+(idx_tr-1)*sizeClass) = label;
+%                 training_data{idy_tr+(idx_tr-1)*sizeClass} = histcounts(leaves(:),numBins);
+                training_data_tmp(idy_tr,:) = histcounts(leaves(:),numBins);
+%                 training_label(idy_tr+(idx_tr-1)*sizeClass) = label;
+                training_label_tmp(idy_tr) = label;
                 %hist_tr{idx_tr,idy_tr} = cluster_list; % Archive cluster lists
             end
+            training_data{idx_tr} = training_data_tmp;
+            training_label{idx_tr} = training_label_tmp;
         end
         
-        data_train = [training_data,training_label];
+        data_train = [cat(1,training_data{:}),cat(1,training_label{:})];
         
         % Clear unused varibles to save memory
         clearvars desc_tr training_desc training_data training_label

@@ -15,7 +15,7 @@ close all;
 % Set the random forest parameters ...
 param.num = 350;%10; % Number of trees
 param.depth = 9; % trees depth
-param.splitNum = 150;%3; % Number of split functions to try
+param.splitNum = 10;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
 param.split_func = 4;
 
@@ -61,9 +61,9 @@ init;
 close all;
 
 % Set the random forest parameters ...
-param.num = 150;%10; % Number of trees
-param.depth = 5; % trees depth
-param.splitNum = 150;%3; % Number of split functions to try
+param.num = 350;%10; % Number of trees
+param.depth = 9; % trees depth
+param.splitNum = 10;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
 param.split_func = 1;
 
@@ -97,4 +97,5 @@ end
 
 % show accuracy and confusion matrix ...
 accuracy_test = sum(predictions==data_test(:,end))/size(data_test,1);
+% 0.52 0.9867
 
