@@ -14,16 +14,13 @@ close all;%, classList_train
 
 
 % Set the random forest parameters ...
-param.num = 200;%10; % Number of trees
+param.num = 100;%10; % Number of trees
 param.depth = 4; % trees depth
 param.splitNum = 5;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
 param.split_func = 1;
 
 % Train Random Forest ...
-duration = zeros(10,1);
-accuracy_test = zeros(10,1);
-for count = 1:10
 [trees,ig_best] = growTrees(data_train,param);
 
 % Evaluate/Test Random Forest ...
@@ -38,30 +35,26 @@ p_rf = trees(1).prob(leaves,:);
 p_rf_sum(:,n) = sum(p_rf)/length(trees);
 [~,predictions(n)] = max(p_rf_sum(:,n));
 end
-duration(i) = toc
+toc
+
 % show accuracy and confusion matrix ...
-accuracy_test(i) = sum(predictions==data_test(:,end))/size(data_test,1);
-% conf = confusionmat(data_test(:,end), predictions);
+accuracy_test = sum(predictions==data_test(:,end))/size(data_test,1);
+conf = confusionmat(data_test(:,end), predictions);
+
+% str = input('1_4_5_1 ','s');
+% save([str,'.mat'],'param','trees','classList_train','accuracy_test','conf');
+
+for n=1:size(data_train,1)
+leaves = testTrees(data_train(n,:),trees,param);
+% disp(leaves);
+% average the class distributions of leaf nodes of all trees
+p_rf = trees(1).prob(leaves,:);
+p_rf_sum(:,n) = sum(p_rf)/length(trees);
+[~,predictions(n)] = max(p_rf_sum(:,n));
 end
 
-duration_mean = mean(duration)
-accuracy_test_mean = mean(accuracy_test)
-% str = input('conf200_4_5_1 ','s');
-% save([str,'.mat'],'conf');
-load handel
-sound(y,Fs)
-
-% for n=1:size(data_train,1)
-% leaves = testTrees(data_train(n,:),trees,param);
-% % disp(leaves);
-% % average the class distributions of leaf nodes of all trees
-% p_rf = trees(1).prob(leaves,:);
-% p_rf_sum(:,n) = sum(p_rf)/length(trees);
-% [~,predictions(n)] = max(p_rf_sum(:,n));
-% end
-% 
-% % show accuracy and confusion matrix ...
-% accuracy_train = sum(predictions==data_train(:,end))/size(data_train,1);
+% show accuracy and confusion matrix ...
+accuracy_train = sum(predictions==data_train(:,end))/size(data_train,1);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % random forest codebook for Caltech101 image categorisation
