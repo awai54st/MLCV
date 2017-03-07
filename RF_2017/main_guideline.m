@@ -14,7 +14,7 @@ close all;%, classList_train
 
 
 % Set the random forest parameters ...
-param.num = 200;%10; % Number of trees
+param.num = 100;%10; % Number of trees
 param.depth = 4; % trees depth
 param.splitNum = 5;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
@@ -38,14 +38,15 @@ p_rf = trees(1).prob(leaves,:);
 p_rf_sum(:,n) = sum(p_rf)/length(trees);
 [~,predictions(n)] = max(p_rf_sum(:,n));
 end
-duration(i) = toc
+duration(count) = toc
 % show accuracy and confusion matrix ...
-accuracy_test(i) = sum(predictions==data_test(:,end))/size(data_test,1);
+accuracy_test(count) = sum(predictions==data_test(:,end))/size(data_test,1);
 % conf = confusionmat(data_test(:,end), predictions);
 end
 
-duration_mean = mean(duration)
 accuracy_test_mean = mean(accuracy_test)
+duration_mean = mean(duration)
+
 % str = input('conf200_4_5_1 ','s');
 % save([str,'.mat'],'conf');
 load handel
