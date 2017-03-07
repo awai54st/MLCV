@@ -15,8 +15,8 @@ close all;%, classList_train
 
 % Set the random forest parameters ...
 param.num = 300;%10; % Number of trees
-param.depth = 10; % trees depth
-param.splitNum = 20;%3; % Number of split functions to try
+param.depth = 9; % trees depth
+param.splitNum = 5;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
 param.split_func = 1;
 
