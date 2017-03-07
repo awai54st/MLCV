@@ -7,16 +7,16 @@ init;
 % Select dataset
 % we do bag-of-words technique to convert images to vectors (histogram of codewords)
 % Set 'showImg' in getData.m to 0 to stop displaying training and testing images and their feature vectors
-tic
+
 [data_train, data_test] = getData('Caltech_kmeans');
 close all;%, classList_train
 
 
 
 % Set the random forest parameters ...
-param.num = 100;%10; % Number of trees
-param.depth = 4; % trees depth
-param.splitNum = 5;%3; % Number of split functions to try
+param.num = 300;%10; % Number of trees
+param.depth = 10; % trees depth
+param.splitNum = 20;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
 param.split_func = 1;
 
@@ -24,6 +24,7 @@ param.split_func = 1;
 duration = zeros(10,1);
 accuracy_test = zeros(10,1);
 for count = 1:10
+    tic
 [trees,ig_best] = growTrees(data_train,param);
 
 % Evaluate/Test Random Forest ...
