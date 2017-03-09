@@ -11,6 +11,7 @@ PHOW_Sizes = [4 8 10]; % Multi-resolution, these values determine the scale of e
 PHOW_Step = 8; % The lower the denser. Select from {2,4,8,16}
 
 switch MODE
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   Get kmeans data   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 'Caltech_kmeans' % Caltech dataset
         close all;
         imgSel = [15 15]; % randomly select 15 images each class without replacement. (For both training & testing)
@@ -59,7 +60,7 @@ switch MODE
         %desc_sel is a 128x100k (nxp data) (observation x variables)
         
         % K-means clustering
-        numBins = 256; % for instance,
+        numBins = 256;%512;%128;%256; % for instance,
         cluster_centers = kmeans(desc_sel,numBins);
         
         %Training data: vectors are histograms, one from each training image
@@ -95,6 +96,7 @@ switch MODE
         % Clear unused varibles to save memory
         clearvars desc_tr desc_sel hist_tmp I training_data training_label
         
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 'Caltech_RFCB'
         
         close all;
@@ -148,7 +150,7 @@ switch MODE
         for idx = 1:numClass
             for idy = 1:sizeClass
                 desc_size = size(desc_tr{idx,idy},2);
-                training_desc_label = repmat(idy+(idx-1)*sizeClass,1,666);
+                training_desc_label = repmat(idy+(idx-1)*sizeClass,1,666);%666
                 desc_tmp = single(vl_colsubset(desc_tr{idx,idy}, 666));
 %                 desc_tmp = [desc_tmp;training_desc_label];
                 training_desc = [training_desc,[desc_tmp;training_desc_label]];
@@ -156,9 +158,9 @@ switch MODE
         end
         
         % Set the random forest parameters ...
-        param_codebook.num = 150;%10; % Number of trees
-        param_codebook.depth = 5; % trees depth
-        param_codebook.splitNum = 5;%3; % Number of split functions to try
+        param_codebook.num = 10;%150;%10; % Number of trees
+        param_codebook.depth = 8; % trees depth
+        param_codebook.splitNum = 20;%3; % Number of split functions to try
         param_codebook.split = 'IG'; % Currently support 'information gain' only
         param_codebook.split_func = 1;
         
@@ -177,7 +179,7 @@ switch MODE
         training_data = cell(numClass,1);
         training_label = cell(numClass,1);
         
-        parfor idx_tr = 1:numClass
+        for idx_tr = 1:numClass
             label = idx_tr;
             training_data_tmp = zeros(sizeClass,numBins);
             training_label_tmp = zeros(sizeClass,1);
@@ -203,8 +205,7 @@ switch MODE
         
 end
 
-
-switch MODE
+switch MODE  
     case 'Caltech_kmeans'
         if showImg
             figure('Units','normalized','Position',[.05 .1 .4 .9]);
@@ -258,6 +259,7 @@ switch MODE
             label = idx_te;
             for idy_te = 1:sizeClasses
                 %hist_tmp = knnsearch(cluster_centers',single(desc_te{idx_te,idy_te})');
+%                 [~,hist_tmp] = min(vl_alldist(single(desc_te{idx_te,idy_te}), cluster_centers),[],2) ;
                 [~,hist_tmp] = min(vl_alldist(single(desc_te{idx_te,idy_te}), cluster_centers),[],2) ;
                 test_data(idy_te+(idx_te-1)*sizeClasses,:) = histcounts(hist_tmp,numBins);
                 test_label(idy_te+(idx_te-1)*sizeClasses) = label;

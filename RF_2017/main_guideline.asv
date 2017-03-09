@@ -12,13 +12,12 @@ init;
 % Set the random forest parameters ...
 param.num =400;%10; % Number of trees
 param.depth = 9; % trees depth
-param.splitNum = 20;%3; % Number of split functions to try
+param.splitNum = 5;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
 param.split_func = 1;
 
 loop=20;
-training_time = zeros(loop,1);
-testing_time = zeros(loop,1);
+duration = zeros(loop,1);
 accuracy_test = zeros(loop,1);
 
 for count = 1:loop
@@ -29,9 +28,6 @@ for count = 1:loop
 
 % Train Random Forest ...
 [trees,ig_best] = growTrees(data_train,param);
-
-training_time(count) = toc
-tic
 
 % Evaluate/Test Random Forest ...
 predictions = zeros(size(data_test,1),1);
@@ -45,7 +41,7 @@ p_rf = trees(1).prob(leaves,:);
 p_rf_sum(:,n) = sum(p_rf)/length(trees);
 [~,predictions(n)] = max(p_rf_sum(:,n));
 end
-testing_time(count) = toc
+duration(count) = toc
 % show accuracy and confusion matrix ...
 accuracy_test(count) = sum(predictions==data_test(:,end))/size(data_test,1);
 conf{count} = confusionmat(data_test(:,end), predictions);
@@ -53,7 +49,7 @@ end
 
 %accuracy_test_mean = mean(accuracy_test);
 accuracy_test_max = max(accuracy_test)
-duration_mean = mean(training_time);
+duration_mean = mean(duration);
 %feed = [accuracy_test_mean;accuracy_test_max;duration_mean]
 
 % 
@@ -90,7 +86,7 @@ param.split_func = 1;
 
 
 loop=20;
-training_time = zeros(loop,1);
+duration = zeros(loop,1);
 accuracy_test = zeros(loop,1);
 
 for count = 1:loop
@@ -126,25 +122,10 @@ p_rf = trees(1).prob(leaves,:);
 p_rf_sum(:,n) = sum(p_rf)/length(trees);
 [~,predictions(n)] = max(p_rf_sum(:,n));
 end
-training_time(count) = toc
+toc
 % show accuracy and confusion matrix ...
-accuracy_test(count) = sum(predictions==data_test(:,end))/size(data_test,1);
-conf{count} = confusionmat(data_test(:,end), predictions);
-end
-
-%accuracy_test_mean = mean(accuracy_test);
-accuracy_test_max = max(accuracy_test)
-duration_mean = mean(training_time);
+accuracy_test = sum(predictions==data_test(:,end))/size(data_test,1);
 % 0.52 0.9867
 
 load handel
 sound(y,Fs)
-
-%% Plot Confusion Matrix
-
-imagesc(conf{3});
-xlabel('actual class');
-ylabel('predicted class');
-title('Confusion Matrix of RF Codebook Classifier')
-colorbar
-
