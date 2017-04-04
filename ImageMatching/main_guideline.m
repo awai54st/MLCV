@@ -16,19 +16,19 @@ if imageset==0
     image2 = C{5}(:,:,1);
 % HG imageset
 elseif imageset==1 % original size
-    image1 = rgb2gray(imread('HG_image/img1.JPG'));
-    image2 = rgb2gray(imread('HG_image/img2.JPG'));
+    image1 = rgb2gray(imread('HG/img1.JPG'));
+    image2 = rgb2gray(imread('HG/img2.JPG'));
 elseif imageset==2 % scaled size
-    image1 = imresize(rgb2gray(imread('HG_image/img2.JPG')),0.5);
-    image2 = imresize(rgb2gray(imread('HG_image/img3.JPG')),0.5);
+    image1 = imresize(rgb2gray(imread('HG/img2.JPG')),0.5);
+    image2 = imresize(rgb2gray(imread('HG/img3.JPG')),0.5);
     
 % FD imageset
 elseif imageset==3 % original size
-    image1 = rgb2gray(imread('FD_image/img1.JPG'));
-    image2 = rgb2gray(imread('FD_image/img2.JPG'));
+    image1 = rgb2gray(imread('FD1/img1.JPG'));
+    image2 = rgb2gray(imread('FD1/img2.JPG'));
 elseif imageset==4 % scaled size
-    image1 = imresize(rgb2gray(imread('FD_image/img1.JPG')),0.5);
-    image2 = imresize(rgb2gray(imread('FD_image/img2.JPG')),0.5);
+    image1 = imresize(rgb2gray(imread('FD1/img1.JPG')),0.5);
+    image2 = imresize(rgb2gray(imread('FD1/img3.JPG')),0.5);
 end
 % figure;imshow(groundTruthImage);
 
@@ -43,9 +43,15 @@ end
 
 % https://github.com/gokhanozbulak/Harris-Detector.git
 
-% Harris Feature Extraction
-features1_raw = harris(image1, 0.04, 20000);
-features2_raw = harris(image2, 0.04, 20000);
+feat_switch = 0;
+if feat_switch==0
+    % Harris Feature Extraction
+    features1_raw = harris(image1, 0.04, 20000);
+    features2_raw = harris(image2, 0.04, 20000);
+elseif feat_switch==1
+    % Features by Clicking on Image
+    [features1_raw,features2_raw] = clickImg(image1,image2);
+end
 
 % Descriptor Extraction
 desc_switch = 1;
@@ -54,6 +60,7 @@ if desc_switch==0
     descriptor1 = sampledPatchDesc(image1, features1_raw);
     descriptor2 = sampledPatchDesc(image2, features2_raw);
     sim_th = 1.5;
+% Design 2: 11x11 Intensity Histograms
 elseif desc_switch==1
     descriptor1 = histDesc(image1, features1_raw);
     descriptor2 = histDesc(image2, features2_raw);
@@ -135,7 +142,7 @@ clear all; close all; clc;
 
 init;
 
-imageset = 0;
+imageset = 4;
 if imageset==0
     % Tsukuba imageset
     [ ~ , C{1} ] = readppm('tsukuba/scene1.row3.col1.ppm');
@@ -149,37 +156,30 @@ if imageset==0
     image2 = C{5}(:,:,1);
 % HG imageset
 elseif imageset==1 % original size
-    image1 = rgb2gray(imread('HG_image/img1.JPG'));
-    image2 = rgb2gray(imread('HG_image/img2.JPG'));
+    image1 = rgb2gray(imread('HG/img1.JPG'));
+    image2 = rgb2gray(imread('HG/img2.JPG'));
 elseif imageset==2 % scaled size
-    image1 = imresize(rgb2gray(imread('HG_image/img2.JPG')),0.5);
-    image2 = imresize(rgb2gray(imread('HG_image/img3.JPG')),0.5);
+    image1 = imresize(rgb2gray(imread('HG/img2.JPG')),0.5);
+    image2 = imresize(rgb2gray(imread('HG/img3.JPG')),0.5);
     
 % FD imageset
 elseif imageset==3 % original size
-    image1 = rgb2gray(imread('FD_image/img1.JPG'));
-    image2 = rgb2gray(imread('FD_image/img2.JPG'));
+    image1 = rgb2gray(imread('FD1/img1.JPG'));
+    image2 = rgb2gray(imread('FD1/img2.JPG'));
 elseif imageset==4 % scaled size
-    image1 = imresize(rgb2gray(imread('FD_image/img1.JPG')),0.5);
-    image2 = imresize(rgb2gray(imread('FD_image/img2.JPG')),0.5);
+    image1 = imresize(rgb2gray(imread('FD1/img1.JPG')),0.5);
+    image2 = imresize(rgb2gray(imread('FD1/img3.JPG')),0.5);
 end
 
-
-
-% PHOW_Sizes = [4 8 10]; % Multi-resolution, these values determine the scale of each layer.
-% PHOW_Step = 8; % The lower the denser. Select from {2,4,8,16}
-% [features1, descriptor1] = vl_phow(single(image1),'Sizes',PHOW_Sizes,'Step',PHOW_Step); %  extracts PHOW features (multi-scaled Dense SIFT)
-% [features2, descriptor2] = vl_phow(single(image2),'Sizes',PHOW_Sizes,'Step',PHOW_Step); %  extracts PHOW features (multi-scaled Dense SIFT)
-% descriptor1 = descriptor1';
-% descriptor2 = descriptor2';
-
+% vl_sift Descriptors
 [frame1, descriptor1] = vl_sift(single(image1)) ;
 [frame2, descriptor2] = vl_sift(single(image2)) ;
+
+% Nearest Neighbour for Descriptor Matching
 [matches, scores] = vl_ubcmatch(descriptor1, descriptor2) ;
 features1_raw = frame1(1:2,:); features2_raw = frame2(1:2,:);
 
 feat_len = size(matches,2);
-% features1 = zeros(2,feat_len); features2 = zeros(2,feat_len);
 idx = 1;
 for i = 1:feat_len
     if scores(i)<8000
@@ -196,9 +196,9 @@ title('Putative point matches');
 
 % Calculate Homography Matrix using SVD
 H = homography_solve(features1, features2);
-
 projection = homography_transform(features1,H);
 
+% Calculate Homography Accuracy as Average Euclidean Projection Error
 HA = mean(sqrt(sum((projection - features2).^2)));
 
 % Calculate Fundamental Matrix

@@ -28,10 +28,10 @@ A = [hx hy]';
 permut = [[1:n]',n+[1:n]']';
 permut = permut(:);
 A = A(permut,:);
+[~, ~, V] = svd(A);
 if n == 4
     h = null(A);
 else
-    [~, ~, V] = svd(A);
     h = V(:,9);
 end
 % v = (reshape(U(:,9), 3, 3)).';
