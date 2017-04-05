@@ -2,7 +2,7 @@
 
 clear all; close all; clc;
 
-imageset = 4;
+imageset = 0;
 if imageset==0
     % Tsukuba imageset
     [ ~ , C{1} ] = readppm('tsukuba/scene1.row3.col1.ppm');
@@ -19,35 +19,35 @@ elseif imageset==1 % original size
     image1 = rgb2gray(imread('HG/img1.JPG'));
     image2 = rgb2gray(imread('HG/img2.JPG'));
 elseif imageset==2 % scaled size
-    image1 = imresize(rgb2gray(imread('HG/img2.JPG')),0.5);
-    image2 = imresize(rgb2gray(imread('HG/img3.JPG')),0.5);
+    image1 = imresize(rgb2gray(imread('HG/img2.JPG')),0.125);
+    image2 = imresize(rgb2gray(imread('HG/img3.JPG')),0.125);
     
 % FD imageset
 elseif imageset==3 % original size
     image1 = rgb2gray(imread('FD1/img1.JPG'));
     image2 = rgb2gray(imread('FD1/img2.JPG'));
 elseif imageset==4 % scaled size
-    image1 = imresize(rgb2gray(imread('FD1/img1.JPG')),0.5);
-    image2 = imresize(rgb2gray(imread('FD1/img3.JPG')),0.5);
+    image1 = imresize(rgb2gray(imread('FD1/img1.JPG')),0.125);
+    image2 = imresize(rgb2gray(imread('FD1/img2.JPG')),0.125);
 end
 % figure;imshow(groundTruthImage);
 
 % Design 1
-% harrisDetector_customBlur(C{1}(:,:,1));
+% harrisFeatureDetector_customBlur(C{1}(:,:,1));
 
 % Design 2
-% corners = detectHarrisFeatures(C{1}(:,:,1));
+% corners = detectharrisFeatureFeatures(C{1}(:,:,1));
 % 
 % imshow(C{1}(:,:,1)); hold on;
 % plot(corners.selectStrongest(150));
 
-% https://github.com/gokhanozbulak/Harris-Detector.git
+% https://github.com/gokhanozbulak/harrisFeature-Detector.git
 
 feat_switch = 0;
 if feat_switch==0
-    % Harris Feature Extraction
-    features1_raw = harris(image1, 0.04, 20000);
-    features2_raw = harris(image2, 0.04, 20000);
+    % harrisFeature Feature Extraction
+    features1_raw = harrisFeature(image1, 0.04, 20000);
+    features2_raw = harrisFeature(image2, 0.04, 20000);
 elseif feat_switch==1
     % Features by Clicking on Image
     [features1_raw,features2_raw] = clickImg(image1,image2);
@@ -99,9 +99,9 @@ showMatchedFeatures(image1,image2,features1',features2','montage','PlotOptions',
 title('Putative point matches');
 
 % Calculate Homography Matrix using SVD
-H = homography_solve(features1, features2);
+H = homographySolve(features1, features2);
 
-projection = homography_transform(features1,H);
+projection = homographyTransform(features1,H);
 
 HA = mean(sqrt(sum((projection - features2).^2)));
 
@@ -126,15 +126,29 @@ epiLines = epipolarLine(F,features2(:,inliers)');
 points = lineToBorderPoints(epiLines,size(image2));
 line(points(:,[1,3])',points(:,[2,4])');
 
-%% TB for homography_solve
+%% TB for homographySolve
 
 clear all; close all; clc;
 
 features1 = [[1;1],[1;2],[2;1],[2;2],[3;1]];
 features2 = [[1;6],[1;7],[2;6],[2;7],[3;6]];
-H = homography_solve(features1, features2);
-projection = homography_transform(features1,H);
+H = homographySolve(features1, features2);
+projection = homographyTransform(features1,H);
 HA = mean(sqrt(sum((projection - features2).^2)));
+
+%% TB for fundamentalSolve
+
+clear all; close all; clc;
+
+% features1 = [[1;1],[1;2],[2;1],[2;2],[3;1]];
+% features2 = [[1;6],[1;7],[2;6],[2;7],[3;6]];
+features1 = randi(10,2,18);
+features2 = features1+1;
+n = size(features1,2);
+[F1, ~] = fundamentalSolve(features1, features2);
+F2 = estimateFundamentalMatrix(features1',features2','NumTrials',4000);
+e1 = [features2;ones(1,n)]'*F1*[features1;ones(1,n)];
+e2 = [features2;ones(1,n)]'*F2*[features1;ones(1,n)];
 
 %% vl_feat SIFT
 
@@ -195,8 +209,8 @@ showMatchedFeatures(image1,image2,features1',features2','montage','PlotOptions',
 title('Putative point matches');
 
 % Calculate Homography Matrix using SVD
-H = homography_solve(features1, features2);
-projection = homography_transform(features1,H);
+H = homographySolve(features1, features2);
+projection = homographyTransform(features1,H);
 
 % Calculate Homography Accuracy as Average Euclidean Projection Error
 HA = mean(sqrt(sum((projection - features2).^2)));
