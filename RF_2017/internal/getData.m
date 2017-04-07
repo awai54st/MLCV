@@ -5,7 +5,7 @@ function [ data_train, data_query ] = getData( MODE )
 %   4. Caltech 101
 data_train = [];
 data_query = [];
-showImg = 0; % Show training & testing images and their image feature vector (histogram representation)
+showImg = 1; % Show training & testing images and their image feature vector (histogram representation)
 
 PHOW_Sizes = [4 8 10]; % Multi-resolution, these values determine the scale of each layer.
 PHOW_Step = 8; % The lower the denser. Select from {2,4,8,16}

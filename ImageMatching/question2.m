@@ -198,21 +198,21 @@ clear all; close all; clc;
 init;
 
 % FD1 imageset
-% image1 = imresize(rgb2gray(imread('FD1/img1.JPG')),0.125);
-% image2 = imresize(rgb2gray(imread('FD1/img2.JPG')),0.125);
+image1 = imresize(rgb2gray(imread('FD1/img2.JPG')),0.125);
+image2 = imresize(rgb2gray(imread('FD1/img3.JPG')),0.125);
 % image1 = histeq(image1);
 % image2 = histeq(image2);
 
 
-[ ~ , C{1} ] = readppm('tsukuba/scene1.row3.col1.ppm');
-[ ~ , C{2} ] = readppm('tsukuba/scene1.row3.col2.ppm');
-[ ~ , C{3} ] = readppm('tsukuba/scene1.row3.col3.ppm');
-[ ~ , C{4} ] = readppm('tsukuba/scene1.row3.col4.ppm');
-[ ~ , C{5} ] = readppm('tsukuba/scene1.row3.col5.ppm');
-groundTruthImage = imread('tsukuba/truedisp.row3.col3.pgm');
-
-image1 = C{1}(:,:,1);
-image2 = C{2}(:,:,1);
+% [ ~ , C{1} ] = readppm('tsukuba/scene1.row3.col1.ppm');
+% [ ~ , C{2} ] = readppm('tsukuba/scene1.row3.col2.ppm');
+% [ ~ , C{3} ] = readppm('tsukuba/scene1.row3.col3.ppm');
+% [ ~ , C{4} ] = readppm('tsukuba/scene1.row3.col4.ppm');
+% [ ~ , C{5} ] = readppm('tsukuba/scene1.row3.col5.ppm');
+% groundTruthImage = imread('tsukuba/truedisp.row3.col3.pgm');
+% 
+% image1 = C{1}(:,:,1);
+% image2 = C{2}(:,:,1);
 
 % vl_sift Descriptors
 [frame1, descriptor1] = vl_sift(single(image1)) ;
@@ -280,7 +280,13 @@ epipole = epiPole(F);
 
 disparityRange = [0 64];
 disparityMap = disparity(image1,image2,'BlockSize',...
-    11,'DisparityRange',disparityRange);
+    17,'DisparityRange',disparityRange);
+
+% add noise
+[height, width] = size(disparityMap);
+noise = wgn(height,width,0);
+disparityMap = disparityMap + noise;
+
 figure;
 imshow(disparityMap,disparityRange,'InitialMagnification',50);
 title('Disparity Map');
@@ -289,9 +295,8 @@ colorbar
 
 % https://github.com/owlbread/MATLAB-stereo-image-disparity-map/blob/master/disparitymap.m
 
-depth_map = uint8((200*24*0.2)./(disparityMap));
+depth_map = uint8((0.2*0.024*2*10^6)./(disparityMap));
 % depth_map = histeq(depth_map);
-[height, width] = size(depth_map);
 for y = 1:height
     for x = 1:width
         if depth_map(y,x) > 255 || depth_map(y,x) < 0
@@ -321,3 +326,122 @@ end
 figure;
 plot3(x, y, z, 'k.');
 set(gca,'Zdir','reverse')
+set(gca,'Ydir','reverse')
+
+clear M
+
+%% (d)
+% Calculate disparity map between images A and B.
+
+clear all; close all; clc;
+
+init;
+
+% FD1 imageset
+image1 = imresize(rgb2gray(imread('FD2/img2.JPG')),0.125);
+image2 = imresize(rgb2gray(imread('FD2/img3.JPG')),0.125);
+
+% vl_sift Descriptors
+[frame1, descriptor1] = vl_sift(single(image1)) ;
+[frame2, descriptor2] = vl_sift(single(image2)) ;
+
+% Nearest Neighbour for Descriptor Matching
+[matches, scores] = vl_ubcmatch(descriptor1, descriptor2, 1.5) ;
+features1_raw = frame1(1:2,:); features2_raw = frame2(1:2,:);
+features1 = features1_raw(:,matches(1,:));
+features2 = features2_raw(:,matches(2,:));
+
+% RANSAC to Filter out Outliers
+numMatches = size(matches,2);
+for iter = 1:4000
+    % estimate homography
+    subset = vl_colsubset(1:numMatches, 8) ;
+    feat1_tmp = features1(:,subset);
+    feat2_tmp = features2(:,subset);
+    
+    % Calculate Fundamental Matrix using SVD
+    [F_tmp{iter}, e_tmp{iter}] = fundamentalSolve(feat1_tmp, feat2_tmp);
+    
+    % Calculate Homography Accuracy as Average Euclidean Projection Error
+    epipolar_lines = fundamentalTransform(features1,F_tmp{iter});
+    FA_tmp{iter} = abs(dot( [features2; ones(1, numMatches)], epipolar_lines ));
+    inlier_tmp{iter} = FA_tmp{iter} < 0.001;
+    FA_tmp{iter} = mean(FA_tmp{iter});
+end
+[score, best_idx] = min(cell2mat(FA_tmp)) ;
+inliers = inlier_tmp{best_idx};
+F = F_tmp{best_idx};
+
+% Epipolar Lines
+figure;
+subplot(121);
+imshow(image1);
+title('Features and Epipolar Lines in First Image'); hold on;
+plot(features1(1,inliers),features1(2,inliers),'go');
+epiLines = fundamentalTransform(features1(:,inliers),F);
+points = lineToBorderPoints(epiLines',size(image1));
+line(points(:,[1,3])',points(:,[2,4])');
+
+subplot(122);
+imshow(image2);
+title('Features and Epipolar Lines in Second Image'); hold on;
+plot(features2(1,inliers),features2(2,inliers),'go');
+epiLines = fundamentalTransform(features2(:,inliers),F');
+points = lineToBorderPoints(epiLines',size(image2));
+line(points(:,[1,3])',points(:,[2,4])');
+
+epipole = epiPole(F);
+
+disparityRange = [0 64];
+disparityMap = disparity(image1,image2,'BlockSize',...
+    17,'DisparityRange',disparityRange);
+% disparityMap = imnoise(disparityMap,'gaussian',0,0);
+
+% scale down
+% disp_max = max(disparityMap(:)); disp_min = min(disparityMap(:));
+% disparityMap_tmp = (disparityMap-disp_min) / disp_max;
+% disparityMap_tmp = imnoise(disparityMap_tmp, 'gaussian', 0, 0.01);
+% disparityMap = disparityMap_tmp.*disp_max+disp_min;
+
+% add noise
+[height, width] = size(disparityMap);
+noise = wgn(height,width,0);
+disparityMap = disparityMap + noise;
+
+figure;
+imshow(disparityMap,disparityRange,'InitialMagnification',50);
+title('Disparity Map');
+% colormap jet
+colorbar
+
+% https://github.com/owlbread/MATLAB-stereo-image-disparity-map/blob/master/disparitymap.m
+
+depth_map = uint8((0.2*0.024*2*10^6)./(disparityMap));
+% depth_map = histeq(depth_map);
+for y = 1:height
+    for x = 1:width
+        if depth_map(y,x) > 255 || depth_map(y,x) < 0
+            depth_map(y,x) = 255;
+        end
+    end
+end
+figure; imshow(depth_map);
+
+% M = repmat(uint8(0),height,width,255);
+for y = 1:height
+    for x = 1:width
+        for z = 1:255
+            if depth_map(y,x)==z
+                M(z,x,y) = image1(y,x);
+            end
+            
+        end
+    end
+end
+[x y z] = ind2sub(size(M), find(M));
+figure;
+plot3(x, y, z, 'k.');
+set(gca,'Zdir','reverse')
+set(gca,'Ydir','reverse')
+
+clear M

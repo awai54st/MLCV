@@ -16,7 +16,7 @@ param.splitNum = 20;%3; % Number of split functions to try
 param.split = 'IG'; % Currently support 'information gain' only
 param.split_func = 1;
 
-loop=20;
+loop=10;
 training_time = zeros(loop,1);
 testing_time = zeros(loop,1);
 accuracy_test = zeros(loop,1);
