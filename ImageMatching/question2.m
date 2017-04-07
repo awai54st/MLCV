@@ -137,8 +137,13 @@ clear all; close all; clc;
 init;
 
 % HG imageset
-image1 = imresize(rgb2gray(imread('HG/img1.JPG')),0.5);
-image2 = imresize(rgb2gray(imread('HG/img2.JPG')),0.5);
+% image1 = imresize(rgb2gray(imread('HG/img1.JPG')),0.5);
+% image2 = imresize(rgb2gray(imread('HG/img2.JPG')),0.5);
+
+
+image1 = imread('boat/img1.pgm');
+image2 = imread('boat/img2.pgm');
+image5 = imread('boat/img5.pgm');
 
 % vl_sift Descriptors
 [frame1, descriptor1] = vl_sift(single(image1)) ;
@@ -193,21 +198,21 @@ clear all; close all; clc;
 init;
 
 % FD1 imageset
-image1 = imresize(rgb2gray(imread('FD1/img1.JPG')),0.125);
-image2 = imresize(rgb2gray(imread('FD1/img2.JPG')),0.125);
+% image1 = imresize(rgb2gray(imread('FD1/img1.JPG')),0.125);
+% image2 = imresize(rgb2gray(imread('FD1/img2.JPG')),0.125);
 % image1 = histeq(image1);
 % image2 = histeq(image2);
 
 
-% [ ~ , C{1} ] = readppm('tsukuba/scene1.row3.col1.ppm');
-% [ ~ , C{2} ] = readppm('tsukuba/scene1.row3.col2.ppm');
-% [ ~ , C{3} ] = readppm('tsukuba/scene1.row3.col3.ppm');
-% [ ~ , C{4} ] = readppm('tsukuba/scene1.row3.col4.ppm');
-% [ ~ , C{5} ] = readppm('tsukuba/scene1.row3.col5.ppm');
-% groundTruthImage = imread('tsukuba/truedisp.row3.col3.pgm');
-% 
-% image1 = C{1}(:,:,1);
-% image2 = C{5}(:,:,1);
+[ ~ , C{1} ] = readppm('tsukuba/scene1.row3.col1.ppm');
+[ ~ , C{2} ] = readppm('tsukuba/scene1.row3.col2.ppm');
+[ ~ , C{3} ] = readppm('tsukuba/scene1.row3.col3.ppm');
+[ ~ , C{4} ] = readppm('tsukuba/scene1.row3.col4.ppm');
+[ ~ , C{5} ] = readppm('tsukuba/scene1.row3.col5.ppm');
+groundTruthImage = imread('tsukuba/truedisp.row3.col3.pgm');
+
+image1 = C{1}(:,:,1);
+image2 = C{2}(:,:,1);
 
 % vl_sift Descriptors
 [frame1, descriptor1] = vl_sift(single(image1)) ;
@@ -230,7 +235,7 @@ for iter = 1:4000
     feat1_tmp = features1(:,subset);
     feat2_tmp = features2(:,subset);
     
-    % Calculate Homography Matrix using SVD
+    % Calculate Fundamental Matrix using SVD
     [F_tmp{iter}, e_tmp{iter}] = fundamentalSolve(feat1_tmp, feat2_tmp);
     
     % Calculate Homography Accuracy as Average Euclidean Projection Error
@@ -264,22 +269,55 @@ subplot(122);
 imshow(image2);
 title('Features and Epipolar Lines in Second Image'); hold on;
 plot(features2(1,inliers),features2(2,inliers),'go');
-epiLines = fundamentalTransform(features1(:,inliers),F);
+epiLines = fundamentalTransform(features2(:,inliers),F');
 points = lineToBorderPoints(epiLines',size(image2));
 line(points(:,[1,3])',points(:,[2,4])');
+
+epipole = epiPole(F);
 
 %% (c)
 % Calculate disparity map between images A and B.
 
-disparityRange = [0 96];
+disparityRange = [0 64];
 disparityMap = disparity(image1,image2,'BlockSize',...
-    15,'DisparityRange',disparityRange);
+    11,'DisparityRange',disparityRange);
 figure;
-imshow(disparityMap,disparityRange);
+imshow(disparityMap,disparityRange,'InitialMagnification',50);
 title('Disparity Map');
 % colormap jet
 colorbar
 
 % https://github.com/owlbread/MATLAB-stereo-image-disparity-map/blob/master/disparitymap.m
 
+depth_map = uint8((200*24*0.2)./(disparityMap));
+% depth_map = histeq(depth_map);
+[height, width] = size(depth_map);
+for y = 1:height
+    for x = 1:width
+        if depth_map(y,x) > 255 || depth_map(y,x) < 0
+            depth_map(y,x) = 255;
+        end
+    end
+end
+figure; imshow(depth_map);
 
+% [J1, J2] = rectifyStereoImages(image1,image2,stereoParams);
+% disp = disparity(J1,J2,'BlockSize',...
+%     11,'DisparityRange',disparityRange);
+% xyzPoints = reconstructScene(disp,stereoParams);
+
+% M = repmat(uint8(0),height,width,255);
+for y = 1:height
+    for x = 1:width
+        for z = 1:255
+            if depth_map(y,x)==z
+                M(z,x,y) = image1(y,x);
+            end
+            
+        end
+    end
+end
+[x y z] = ind2sub(size(M), find(M));
+figure;
+plot3(x, y, z, 'k.');
+set(gca,'Zdir','reverse')
